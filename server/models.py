@@ -1,22 +1,17 @@
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates
-from sqlalchemy import UniqueConstraint, CheckConstraint
 db = SQLAlchemy()
 
 class Author(db.Model):
     __tablename__ = 'authors'
     
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, unique=False, nullable=False)  
+    name = db.Column(db.String, unique=True, nullable=False)  
     phone_number = db.Column(db.String)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
-    UniqueConstraint('name', name='unique_author_name_constraint')
 
-    __table_args__ = (
-        CheckConstraint('name IS NOT NULL', name='check_author_name_not_null'),
-    )
 
     # Add validators 
     @validates('name')
@@ -26,16 +21,16 @@ class Author(db.Model):
         if db.session.query(Author).filter(Author.name == name).count() > 0:
             raise ValueError('Name must be unique.')
         return name
+    
+    def __repr__(self):
+        return f'Author(id={self.id}, name={self.name})'
 
     @validates('phone_number')
     def validate_phone_number(self, key, phone_number):
         if phone_number and not all(char.isdigit() for char in phone_number) or len(phone_number) != 10:
             raise ValueError('Phone number must be exactly ten digits.')
         return phone_number
-    
-    def __repr__(self):
-        return f'Author(id={self.id}, name={self.name})'
-    
+        
 
 class Post(db.Model):
     __tablename__ = 'posts'
@@ -74,3 +69,4 @@ class Post(db.Model):
         return title            
     def __repr__(self):
         return f'Post(id={self.id}, title={self.title} content={self.content}, summary={self.summary})'
+
